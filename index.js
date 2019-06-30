@@ -9,7 +9,7 @@ app.set('trust proxy', 1);
 
 const limiter = rateLimit({
     windowMs: 5 * 60 * 1000, // 5 minutes
-    max: 100 // limit each IP to 100 requests per windowMs
+    max: 500
 });
 
 //  apply to all requests
@@ -37,6 +37,31 @@ app.get('/api/claims', (req, res) => {
         .catch(e => {
             console.log(e)
             return res.status(500).send('Oopsie, something went wrong!')
+        })
+})
+
+app.get('/api/command', (req, res) => {
+
+    if (!validateServerObject(req.query)) {
+        return res.status(400).send('Malformed querystring');
+    }
+
+    fetch(`http://${req.query.ip}:${req.query.port}/api/executeconsolecommand?command=${req.query.command}&adminuser=${req.query.adminUser}&admintoken=${req.query.adminToken}`)
+        .then(response => {
+            if (!response.ok) {
+                throw Error(response.statusText);
+            }
+
+            return response.json()
+        })
+        .then(json => {
+            return res.status(200).send(json)
+        })
+        .catch(e => {
+            console.log(e)
+            return res.status(400).send(e)
+
+
         })
 })
 
